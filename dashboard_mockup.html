@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Supply Chain Analytics Dashboard</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.0/chart.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            background-color: #f5f6fa;
+        }
+
+        .dashboard {
+            padding: 20px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .tab-button {
+            padding: 12px 24px;
+            border: none;
+            background-color: #e2e8f0;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            color: #64748b;
+            transition: all 0.3s ease;
+        }
+
+        .tab-button.active {
+            background-color: #3498db;
+            color: white;
+        }
+
+        .tab-content {
+            display: none;
+            padding: 20px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .tab-content.active {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            min-height: calc(100vh - 200px);
+        }
+
+        .chart-container {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            height: 400px;
+            position: relative;
+            margin-bottom: 20px;
+        }
+        
+        .chart-container canvas {
+            width: 100% !important;
+            height: 100% !important;
+        }
+
+        .chart-title {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #2c3e50;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <div class="header">
+            <h1>Supply Chain Analytics Dashboard</h1>
+            <div class="tabs">
+                <button class="tab-button active" onclick="openTab('revenue')">Revenue & Sales</button>
+                <button class="tab-button" onclick="openTab('inventory')">Inventory & Logistics</button>
+                <button class="tab-button" onclick="openTab('supplier')">Supplier & Manufacturing</button>
+                <button class="tab-button" onclick="openTab('forecast')">Forecasting & Optimization</button>
+            </div>
+        </div>
+
+        <!-- Revenue & Sales Tab -->
+        <div id="revenue" class="tab-content active">
+            <div class="chart-container">
+                <div class="chart-title">Revenue by Product Type</div>
+                <canvas id="revenueByProduct"></canvas>
+            </div>
+            <div class="chart-container">
+                <div class="chart-title">SKU Profitability Analysis</div>
+                <canvas id="skuProfitability"></canvas>
+            </div>
+            <div class="chart-container">
+                <div class="chart-title">Sales by Demographics</div>
+                <canvas id="salesDemographics"></canvas>
+            </div>
+            <div class="chart-container">
+                <div class="chart-title">Order Quantity Trends</div>
+                <canvas id="orderTrends"></canvas>
+            </div>
+        </div>
+
+        <!-- Inventory & Logistics Tab -->
+        <div id="inventory" class="tab-content">
+            <div class="chart-container">
+                <div class="chart-title">Stock Levels vs Lead Times</div>
+                <canvas id="stockLeadTime"></canvas>
+            </div>
+            <div class="chart-container">
+                <div class="chart-title">Carrier Performance Matrix</div>
+                <canvas id="carrierPerformance"></canvas>
+            </div>
+            <div class="chart-container">
+                <div class="chart-title">Shipping Costs by Mode</div>
+                <canvas id="shippingCosts"></canvas>
+            </div>
+            <div class="chart-container">
+                <div class="chart-title">Order Quantity vs Shipping Time</div>
+                <canvas id="quantityShippingTime"></canvas>
+            </div>
+        </div>
+
+        <!-- Supplier & Manufacturing Tab -->
+        <div id="supplier" class="tab-content">
+            <div class="chart-container">
+                <div class="chart-title">Supplier Performance Matrix</div>
+                <canvas id="supplierPerformance"></canvas>
+            </div>
+            <div class="chart-container">
+                <div class="chart-title">Defect Rates Analysis</div>
+                <canvas id="defectRates"></canvas>
+            </div>
+            <div class="chart-container">
+                <div class="chart-title">Production Volume vs Costs</div>
+                <canvas id="productionCosts"></canvas>
+            </div>
+            <div class="chart-container">
+                <div class="chart-title">Inspection Failure Analysis</div>
+                <canvas id="inspectionFailures"></canvas>
+            </div>
+        </div>
+
+        <!-- Forecasting & Optimization Tab -->
+        <div id="forecast" class="tab-content">
+            <div class="chart-container">
+                <div class="chart-title">Lead Time Prediction Model</div>
+                <canvas id="leadTimePrediction"></canvas>
+            </div>
+            <div class="chart-container">
+                <div class="chart-title">Inventory Optimization</div>
+                <canvas id="inventoryOptimization"></canvas>
+            </div>
+            <div class="chart-container">
+                <div class="chart-title">Defect Rate Contributors</div>
+                <canvas id="defectContributors"></canvas>
+            </div>
+            <div class="chart-container">
+                <div class="chart-title">Seasonal Sales Trends</div>
+                <canvas id="seasonalTrends"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Tab switching functionality
+        function openTab(tabName) {
+            const tabContents = document.getElementsByClassName('tab-content');
+            const tabButtons = document.getElementsByClassName('tab-button');
+            
+            for (let content of tabContents) {
+                content.classList.remove('active');
+            }
+            
+            for (let button of tabButtons) {
+                button.classList.remove('active');
+            }
+            
+            document.getElementById(tabName).classList.add('active');
+            event.currentTarget.classList.add('active');
+        }
+
+        // Sample data - In real application, this would come from your backend
+        const sampleData = {
+            months: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+            productTypes: ['Electronics', 'Clothing', 'Food', 'Furniture'],
+            demographics: ['18-24', '25-34', '35-44', '45-54', '55+'],
+            shippingModes: ['Air', 'Road', 'Rail'],
+            suppliers: ['Supplier A', 'Supplier B', 'Supplier C', 'Supplier D'],
+            inspectionTypes: ['Quality Check', 'Safety Test', 'Performance Test', 'Durability Test']
+        };
+
+        // Revenue & Sales Charts
+        new Chart(document.getElementById('revenueByProduct'), {
+            type: 'bar',
+            data: {
+                labels: sampleData.productTypes,
+                datasets: [{
+                    label: 'Revenue',
+                    data: [12000, 19000, 3000, 5000],
+                    backgroundColor: '#3498db'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                layout: {
+                    padding: 20
+                }
+            }
+        });
+
+        new Chart(document.getElementById('skuProfitability'), {
+            type: 'scatter',
+            data: {
+                datasets: [{
+                    label: 'SKUs',
+                    data: [
+                        {x: 50, y: 120},   // Low sales, low profit
+                        {x: 75, y: 180},   // Low sales, moderate profit
+                        {x: 100, y: 200},  // Medium sales, medium profit
+                        {x: 120, y: 100},  // Medium sales, low profit
+                        {x: 140, y: 400},  // High sales, high profit
+                        {x: 160, y: 300},  // High sales, moderate profit
+                        {x: 180, y: 450},  // Higher sales, highest profit
+                        {x: 200, y: 280},  // Very high sales, moderate profit
+                        {x: 220, y: 500},  // Very high sales, very high profit
+                        {x: 250, y: 150}   // Extremely high sales, low profit
+                    ],
+                    backgroundColor: '#e74c3c'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false
+            }
+        });
+
+        new Chart(document.getElementById('salesDemographics'), {
+            type: 'pie',
+            data: {
+                labels: sampleData.demographics,
+                datasets: [{
+                    data: [15, 30, 25, 20, 10],
+                    backgroundColor: ['#3498db', '#e74c3c', '#2ecc71', '#f1c40f', '#9b59b6']
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false
+            }
+        });
+
+        new Chart(document.getElementById('orderTrends'), {
+            type: 'line',
+            data: {
+                labels: sampleData.months,
+                datasets: [{
+                    label: 'Order Quantity',
+                    data: [65, 59, 80, 81, 56, 55],
+                    borderColor: '#2ecc71'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false
+            }
+        });
+
+        // Initialize other charts similarly for other tabs
+        // Inventory & Logistics Charts
+        new Chart(document.getElementById('stockLeadTime'), {
+            type: 'scatter',
+            data: {
+                datasets: [{
+                    label: 'Stock vs Lead Time',
+                    data: [
+                        {x: 10, y: 20},
+                        {x: 15, y: 25},
+                        {x: 20, y: 30},
+                        {x: 25, y: 35},
+                        {x: 30, y: 40},
+                        {x: 35, y: 45},
+                        {x: 40, y: 50},
+                        {x: 45, y: 55},
+                        {x: 50, y: 60},
+                        {x: 55, y: 65}
+                    ],
+                    backgroundColor: '#3498db'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false
+            }
+        });
+
+        // // Initialize Carrier Performance Chart
+        // new Chart(document.getElementById('carrierPerformance'), {
+        //     type: 'radar',
+        //     data: {
+        //         labels: ['Cost', 'Speed', 'Reliability', 'Coverage', 'Customer Service'],
+        //         datasets: [{
+        //             label: 'Carrier A',
+        //             data: [90, 85, 88, 92, 95],
+        //             fill: true,
+        //             backgroundColor: 'rgba(52, 152, 219, 0.2)',
+        //             borderColor: '#3498db'
+        //         }, {
+        //             label: 'Carrier B',
+        //             data: [95, 80, 85, 88, 90],
+        //             fill: true,
+        //             backgroundColor: 'rgba(46, 204, 113, 0.2)',
+        //             borderColor: '#2ecc71'
+        //         }]
+        //     },
+        //     options: {
+        //         responsive: true,
+        //         maintainAspectRatio: false,
+        //         scales: {
+        //             r: {
+        //                 beginAtZero: true,
+        //                 max: 100
+        //             }
+        //         }
+        //     }
+        // });
+        new Chart(document.getElementById('carrierPerformance'), {
+            type: 'polarArea',
+            data: {
+                labels: ['Cost', 'Speed', 'Reliability', 'Coverage', 'Customer Service'],
+                datasets: [{
+                    label: 'Carrier A',
+                    data: [90, 85, 88, 92, 95],
+                    backgroundColor: ['#3498db', '#9b59b6', '#e74c3c', '#f1c40f', '#2ecc71']
+                }, {
+                    label: 'Carrier B',
+                    data: [95, 80, 85, 88, 90],
+                    backgroundColor: ['#2980b9', '#8e44ad', '#c0392b', '#f39c12', '#27ae60']
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Carrier Performance Analysis',
+                        font: { size: 18, weight: 'bold' }
+                    }
+                }
+            }
+        });
+        // Initialize Shipping Costs Chart
+        new Chart(document.getElementById('shippingCosts'), {
+            type: 'bar',
+            data: {
+                labels: sampleData.shippingModes,
+                datasets: [{
+                    label: 'Average Cost per Mile',
+                    data: [5.2, 2.8, 1.5],
+                    backgroundColor: '#3498db'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false
+            }
+        });
+
+        // Initialize Quantity vs Shipping Time
+        new Chart(document.getElementById('quantityShippingTime'), {
+            type: 'scatter',
+            data: {
+                datasets: [{
+                    label: 'Orders',
+                    data: Array.from({length: 50}, () => ({
+                        x: Math.random() * 1000,
+                        y: Math.random() * 10 + 2
+                    })),
+                    backgroundColor: '#e74c3c'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Order Quantity'
+                        }
+                    },
+                    y: {
+                        title: {
+                            display: true,
+                            text: 'Shipping Time (Days)'
+                        }
+                    }
+                }
+            }
+        });
+
+        // Initialize Supplier Performance Chart
+        new Chart(document.getElementById('supplierPerformance'), {
+            type: 'bar',
+            data: {
+                labels: sampleData.suppliers,
+                datasets: [{
+                    label: 'Lead Time (Days)',
+                    data: [12, 15, 10, 14],
+                    backgroundColor: '#3498db'
+                }, {
+                    label: 'Manufacturing Cost ($)',
+                    data: [100, 120, 95, 110],
+                    backgroundColor: '#2ecc71'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false
+            }
+        });
+
+        // Initialize Defect Rates Chart
+        new Chart(document.getElementById('defectRates'), {
+            type: 'line',
+            data: {
+                labels: sampleData.months,
+                datasets: sampleData.productTypes.map((type, index) => ({
+                    label: type,
+                    data: Array.from({length: 6}, () => Math.random() * 5),
+                    borderColor: ['#3498db', '#e74c3c', '#2ecc71', '#f1c40f'][index]
+                }))
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false
+            }
+        });
+
+        // Initialize Production Costs Chart
+        new Chart(document.getElementById('productionCosts'), {
+            type: 'scatter',
+            data: {
+                datasets: [{
+                    label: 'Production Volume vs Cost',
+                    data: Array.from({length: 30}, () => ({
+                        x: Math.random() * 1000 + 500,
+                        y: Math.random() * 50 + 100
+                    })),
+                    backgroundColor: '#9b59b6'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Production Volume'
+                        }
+                    },
+                    y: {
+                        title: {
+                            display: true,
+                            text: 'Cost per Unit ($)'
+                        }
+                    }
+                }
+            }
+        });
+
+        // Initialize Inspection Failures Chart
+        new Chart(document.getElementById('inspectionFailures'), {
+            type: 'bar',
+            data: {
+                labels: sampleData.inspectionTypes,
+                datasets: [{
+                    label: 'Failure Rate (%)',
+                    data: [4.2, 3.8, 5.1, 2.9],
+                    backgroundColor: '#e74c3c'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false
+            }
+        });
+
+        // Initialize Lead Time Prediction Chart
+        new Chart(document.getElementById('leadTimePrediction'), {
+            type: 'line',
+            data: {
+                labels: sampleData.months,
+                datasets: [{
+                    label: 'Actual Lead Time',
+                    data: [14, 15, 13, 16, 14, 15],
+                    borderColor: '#3498db'
+                }, {
+                    label: 'Predicted Lead Time',
+                    data: [14.2, 14.8, 13.5, 15.8, 14.2, 14.9],
+                    borderColor: '#e74c3c',
+                    borderDash: [5, 5]
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false
+            }
+        });
+
+        // Initialize Inventory Optimization Chart
+        new Chart(document.getElementById('inventoryOptimization'), {
+            type: 'line',
+            data: {
+                labels: sampleData.months,
+                datasets: [{
+                    label: 'Current Stock Level',
+                    data: [500, 480, 520, 490, 510, 485],
+                    borderColor: '#3498db',
+                    fill: true,
+                    backgroundColor: 'rgba(52, 152, 219, 0.2)'
+                }, {
+                    label: 'Optimal Stock Level',
+                    data: [475, 475, 475, 475, 475, 475],
+                    borderColor: '#2ecc71',
+                    borderDash: [5, 5]
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false
+            }
+        });
+
+        // Initialize Defect Contributors Chart
+        new Chart(document.getElementById('defectContributors'), {
+            type: 'doughnut',
+            data: {
+                labels: ['Material Quality', 'Manufacturing Process', 'Human Error', 'Equipment Malfunction'],
+                datasets: [{
+                    data: [35, 25, 20, 20],
+                    backgroundColor: ['#3498db', '#e74c3c', '#2ecc71', '#f1c40f']
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false
+            }
+        });
+
+        // Initialize Seasonal Trends Chart
+        new Chart(document.getElementById('seasonalTrends'), {
+            type: 'line',
+            data: {
+                labels: ['Q1', 'Q2', 'Q3', 'Q4'],
+                datasets: [{
+                    label: 'Sales',
+                    data: [1200, 1900, 1600, 2100],
+                    borderColor: '#3498db'
+                }, {
+                    label: 'Revenue',
+                    data: [25000, 38000, 32000, 42000],
+                    borderColor: '#2ecc71'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false
+            }
+        });
+    </script>
+</body>
+</html>
